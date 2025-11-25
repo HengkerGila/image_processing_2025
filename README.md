@@ -1,11 +1,14 @@
-# Deskripsi
-## Memproses gambar oleh pak akok (King MIOT)
+# Image Processing 2025
 
-# Cara Menggunakan
-## CMD (Windows)
-### cd image_processing_2025
-### venv\Scripts\activate.bat
+Pemrosesan gambar oleh pak eko mulyanto (King MIOT)
 
-## Linux
-### cd image_processing_2025
-### source venv/bin/activate
+---
+
+## Cara Menggunakan
+
+```bash
+cd image_processing_2025
+venv\Scripts\activate.bat
+
+
+
