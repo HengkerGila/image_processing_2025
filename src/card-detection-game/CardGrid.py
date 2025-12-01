@@ -3,6 +3,20 @@ import numpy as np
 import os
 from keras.models import load_model
 
+def save_cards_to_txt(cards, combo, filename="cards_state.txt"):
+    """
+    Menyimpan hasil deteksi ke file txt:
+    COMBO <nama_combo>
+    CARDS <label1> <label2> ...
+    """
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write(f"COMBO {combo}\n")
+        if cards:
+            f.write("CARDS " + " ".join(cards) + "\n")
+        else:
+            f.write("CARDS\n")
+
+
 def order_points(pts):
     rect = np.zeros((4, 2), dtype = "float32")
     s = pts.sum(axis = 1)
@@ -421,6 +435,9 @@ while True:
         combo = detect_hand_LUT(recognized_cards)
         print("Combo:", combo)
 
+        # Simpan ke TXT untuk “API” ke game raylib
+        save_cards_to_txt(recognized_cards, combo, "cards_state.txt")
+        
         # Tampilkan di layar
         cv2.putText(result_frame, f"Hand: {combo}", (20, 70),
                     cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 200, 0), 2)
