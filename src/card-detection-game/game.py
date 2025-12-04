@@ -1,9 +1,7 @@
 import pygame
 import os
 
-# ============================
-# 1. API: baca cards_state.txt
-# ============================
+# TXT Api
 
 class GameAPIState:
     def __init__(self, combo="Tidak Ada Data", cards=None):
@@ -40,48 +38,89 @@ def load_cards_state(filename="cards_state.txt"):
     return state
 
 
-# ============================
-# 2. Pygame UI
-# ============================
-
+# UI
 pygame.init()
-WIDTH, HEIGHT = 1000, 700
+WIDTH, HEIGHT = 1920, 1080
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Capsa Detector (Pygame)")
+pygame.display.set_caption("CAPSA GAME")
 
 FONT = pygame.font.SysFont("consolas", 22)
 SMALL = pygame.font.SysFont("consolas", 18)
 BIG = pygame.font.SysFont("consolas", 28)
 
-BG_COLOR = (30, 30, 40)
-CARD_COLOR = (50, 50, 80)
-TEXT_COLOR = (230, 230, 230)
-ACCENT = (0, 200, 120)
+BG_COLOR = (250, 250, 250)
+CARD_COLOR = (10, 10, 10)
+TEXT_COLOR = (10, 10, 10)
+ACCENT = (10, 10, 10)
 
 clock = pygame.time.Clock()
 
+# Texture Loader
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CARD_ASSET_DIR = os.path.join(BASE_DIR, "assets", "cards")
+
+# cache supaya tidak load file berulang-ulang
+_card_texture_cache = {}
+
+
+def get_card_texture(label, size):
+    """
+    Mencoba load gambar kartu dari assets/cards/<label>.png
+    dan resize ke 'size' (w, h).
+    Kalau gagal, mengembalikan None.
+    """
+    key = (label, size)
+
+    if key in _card_texture_cache:
+        return _card_texture_cache[key]
+
+    filename = f"{label}.png"
+    path = os.path.join(CARD_ASSET_DIR, filename)
+
+    if not os.path.exists(path):
+        _card_texture_cache[key] = None
+        return None
+
+    try:
+        img = pygame.image.load(path).convert_alpha()
+        img = pygame.transform.smoothscale(img, size)
+        _card_texture_cache[key] = img
+        return img
+    except Exception as e:
+        print(f"Gagal memuat texture {path}: {e}")
+        _card_texture_cache[key] = None
+        return None
+
+
+# ============ CARD SPRITE ============
 
 class CardSprite:
     def __init__(self, label, x, y, w=80, h=110):
         self.label = label
         self.rect = pygame.Rect(x, y, w, h)
+        # coba load texture berdasarkan label
+        self.image = get_card_texture(label, (w, h))
 
     def draw(self, surface):
-        pygame.draw.rect(surface, CARD_COLOR, self.rect, border_radius=10)
-        pygame.draw.rect(surface, (180, 180, 180), self.rect, 2, border_radius=10)
-
-        # label: "7_club" -> "7" dan "C"
-        if "_" in self.label:
-            rank_str, suit = self.label.split("_")
+        if self.image is not None:
+            # kalau ada gambar, pakai gambar
+            surface.blit(self.image, self.rect.topleft)
         else:
-            rank_str, suit = self.label, "?"
+            # fallback: kotak dan tulisan
+            pygame.draw.rect(surface, CARD_COLOR, self.rect, border_radius=10)
+            pygame.draw.rect(surface, (180, 180, 180), self.rect, 2, border_radius=10)
 
-        rank_text = FONT.render(rank_str, True, TEXT_COLOR)
-        surface.blit(rank_text, (self.rect.x + 6, self.rect.y + 6))
+            if "_" in self.label:
+                rank_str, suit = self.label.split("_")
+            else:
+                rank_str, suit = self.label, "?"
 
-        suit_short = suit[0].upper() if suit else "?"
-        suit_text = FONT.render(suit_short, True, TEXT_COLOR)
-        surface.blit(suit_text, (self.rect.x + 6, self.rect.y + 40))
+            rank_text = FONT.render(rank_str, True, TEXT_COLOR)
+            surface.blit(rank_text, (self.rect.x + 6, self.rect.y + 6))
+
+            suit_short = suit[0].upper() if suit else "?"
+            suit_text = FONT.render(suit_short, True, TEXT_COLOR)
+            surface.blit(suit_text, (self.rect.x + 6, self.rect.y + 40))
 
 
 def create_card_sprites(cards, start_x, start_y, per_row=10):
@@ -101,11 +140,13 @@ def create_card_sprites(cards, start_x, start_y, per_row=10):
     return sprites
 
 
+# ============ MAIN LOOP ============
+
 def main():
     state = load_cards_state("cards_state.txt")
     sprites = create_card_sprites(state.cards, 40, 200)
 
-    info_text = "Tekan [R] untuk reload cards_state.txt | Jalankan CardGrid.py di jendela lain."
+    info_text = "Tekan [R] untuk mengupdate state"
 
     running = True
     while running:
@@ -117,14 +158,13 @@ def main():
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:
-                    # reload file dari CardGrid.py
                     state = load_cards_state("cards_state.txt")
                     sprites = create_card_sprites(state.cards, 40, 200)
 
         # ==== RENDER ====
         WIN.fill(BG_COLOR)
 
-        title = BIG.render("Capsa Card Detector (Pygame + CardGrid.py)", True, TEXT_COLOR)
+        title = BIG.render("CAPSA GAME", True, TEXT_COLOR)
         WIN.blit(title, (40, 30))
 
         combo_txt = FONT.render(f"Combo: {state.combo}", True, ACCENT)

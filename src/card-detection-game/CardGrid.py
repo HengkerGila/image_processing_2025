@@ -284,7 +284,7 @@ def detect_hand_LUT(cards):
 #     return classified_card, confidence
 
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 
 # ====== CONFIG CNN KARTU ======
 DirektoriDataSet = "dataset"  # folder yang berisi 2_club, 2_diamond, dst
